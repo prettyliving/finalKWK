@@ -1,17 +1,224 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Racial Wealth Gap Visualization</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Racial Wealth Gap Visualization</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background: #f5f5f4; /* soft stone gray */
+      color: #3a3a3a;      /* dark charcoal text */
+      font-family: Arial, sans-serif;
+      margin: 0;
+    }
+    .section {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      scroll-snap-align: start;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    }
+    .section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 5px;
+      background: linear-gradient(90deg, #c94f4f, #555d50); /* burnt red to moss green */
+      width: 0%;
+      z-index: 1000;
+    }
+    .filters {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #a6a392; /* muted earthy green */
+      border: 1px solid #8c8b7f;
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .filters button {
+      margin: 5px;
+      background: #555d50; /* deep moss green */
+      color: #f5f5f4;      /* soft stone gray text */
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+    .filters button.active {
+      background: #c94f4f; /* burnt red */
+      color: #fff;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 text-gray-900 p-6">
-    <h1 class="text-3xl font-bold mb-4">Racial Wealth Gap Visualization</h1>
-    <canvas id="wealthChart" width="400" height="200"></canvas>
+<body>
 
-    <script src="./script.js"></script>
+  <div class="progress" id="progressBar"></div>
+
+  <div class="section" style="background:#f5f5f4;">
+    <h1>Understanding the Racial Wealth Gap</h1>
+    <p>Scroll down to visualize disparities across US cities</p>
+  </div>
+
+  <div class="section" style="background:#e8e6dc;">
+    <h2>Median Net Worth: White vs Black Households</h2>
+    <div style="width:80%; max-width:800px;">
+      <canvas id="wealthChart"></canvas>
+    </div>
+  </div>
+
+  <div class="section" style="background:#f5f5f4;">
+    <h2>Explore by Wealth Gap Size</h2>
+    <div class="filters" id="cityFilters">
+      <button data-filter="all" class="active">All</button>
+      <button data-filter="highGap">High Gap</button>
+      <button data-filter="mediumGap">Medium Gap</button>
+      <button data-filter="lowGap">Low Gap</button>
+    </div>
+  </div>
+
+  <script>
+    const sections = document.querySelectorAll('.section');
+    const progressBar = document.getElementById('progressBar');
+
+    window.addEventListener('scroll', () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.body.scrollHeight - window.innerHeight;
+      const scrollPercent = (scrollTop / docHeight) * 100;
+      progressBar.style.width = scrollPercent + '%';
+
+      sections.forEach(section => {
+        const rect = section.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.75) {
+          section.classList.add('visible');
+        }
+      });
+    });
+
+    const cities = [
+      { name: "Boston, MA", white: 247500, black: 8000, gap: 31 },
+      { name: "Washington, DC", white: 284000, black: 3400, gap: 83 },
+      { name: "Atlanta, GA", white: 110000, black: 2500, gap: 44 },
+      { name: "Chicago, IL", white: 210000, black: 5000, gap: 42 },
+      { name: "Miami, FL", white: 100000, black: 3200, gap: 31 },
+      { name: "Philadelphia, PA", white: 150000, black: 4100, gap: 36 },
+      { name: "Detroit, MI", white: 95000, black: 2000, gap: 47 },
+      { name: "Los Angeles, CA", white: 355000, black: 3800, gap: 93 },
+      { name: "Houston, TX", white: 150000, black: 9000, gap: 17 },
+      { name: "New York, NY", white: 190000, black: 10000, gap: 19 },
+      { name: "Dallas, TX", white: 165000, black: 8500, gap: 19 },
+      { name: "Phoenix, AZ", white: 26000, black: 4200, gap: 6 },
+      { name: "Baltimore, MD", white: 35000, black: 6000, gap: 6 },
+      { name: "Minneapolis, MN", white: 35000, black: 6500, gap: 5 },
+      { name: "Seattle, WA", white: 35000, black: 7500, gap: 5 },
+    ];
+
+    cities.sort((a,b) => b.gap - a.gap);
+
+    const ctx = document.getElementById('wealthChart').getContext('2d');
+
+    function getChartData(filteredCities) {
+      return {
+        labels: filteredCities.map(c => c.name),
+        datasets: [
+          {
+            label: 'White Median Net Worth',
+            data: filteredCities.map(c => c.white),
+            backgroundColor: '#555d50',  // deep moss green
+            borderRadius: 6,
+          },
+          {
+            label: 'Black Median Net Worth',
+            data: filteredCities.map(c => c.black),
+            backgroundColor: '#c94f4f',  // burnt red
+            borderRadius: 6,
+          }
+        ]
+      };
+    }
+
+    const chartConfig = {
+      type: 'bar',
+      data: getChartData(cities),
+      options: {
+        responsive: true,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+        stacked: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: '#555d50',
+              font: { weight: 'bold', size: 14 }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString(),
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#555d50', font: { weight: 'bold' } },
+            grid: { display: false }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: '#555d50',
+              font: { weight: 'bold' },
+              callback: val => '$' + val / 1000 + 'k'
+            },
+            grid: {
+              color: '#ddd'
+            }
+          }
+        }
+      },
+    };
+
+    let wealthChart = new Chart(ctx, chartConfig);
+
+    const buttons = document.querySelectorAll('#cityFilters button');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        let filtered;
+        switch(btn.dataset.filter){
+          case 'highGap':
+            filtered = cities.filter(c => c.gap >= 10);
+            break;
+          case 'mediumGap':
+            filtered = cities.filter(c => c.gap >= 5 && c.gap < 10);
+            break;
+          case 'lowGap':
+            filtered = cities.filter(c => c.gap < 5);
+            break;
+          default:
+            filtered = cities;
+        }
+
+        wealthChart.data = getChartData(filtered);
+        wealthChart.update();
+      });
+    });
+  </script>
 </body>
 </html>
