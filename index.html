@@ -141,6 +141,53 @@
     .city-item:last-child {
       border-bottom: none;
     }
+    .city-gap-section {
+  background: linear-gradient(#1f1f1f, #0b2545);
+  color: #d0d8e0;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.city-gap-section h2 {
+  font-size: 2.2rem;
+  margin-bottom: 20px;
+  color: #ffffff;
+}
+
+.city-gap-section p {
+  font-size: 1.1rem;
+  max-width: 700px;
+  margin: 0 auto 30px auto;
+  line-height: 1.6;
+}
+
+.city-gap-images {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  align-items: center;
+  justify-content: center;
+}
+
+.city-gap-images img {
+  width: 80%;
+  max-width: 800px;
+  border: 2px solid #0a0a0a;
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.city-gap-images img:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+}
+
+@media (min-width: 768px) {
+  .city-gap-images {
+    flex-direction: row;
+  }
+}
   </style>
 </head>
 <body>
@@ -209,6 +256,8 @@
   <!-- City Filter & List Section -->
   <div class="section" style="background:linear-gradient(#0b2545, #1f1f1f); color:#99aabb;">
     <h2>Explore Cities by Racial Wealth Gap</h2>
+    <img src="ADT07.png" alt="ADT07 Graph" style="max-width:80%; margin:20px 0; border:2px solid #99aabb; border-radius:10px; box-shadow: 0 2px 8px rgba(0,0,0,0.5);" />
+    <img src="SCF Time Series.png" alt="SCF Time Series Graph" style="max-width:80%; margin:20px 0; border:2px solid #99aabb; border-radius:10px; box-shadow: 0 2px 8px rgba(0,0,0,0.5);" />
     <div class="filters">
       <button data-filter="all" class="active">Show All</button>
       <button data-filter="best">Best</button>
@@ -216,12 +265,12 @@
       <button data-filter="worst">Worst</button>
     </div>
     <div class="city-list" id="cityList">
-      <!-- Cities will be rendered here -->
     </div>
   </div>
 
   <script>
-    // Data: top 30 cities with gap categories (mocked)
+    // Data: top 30 cities with gap categories
+    
     const cities = [
       { name: 'Austin, TX', category: 'best', gap: '1.5' },
       { name: 'Baltimore, MD', category: 'worst', gap: '45' },
