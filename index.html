@@ -4,62 +4,142 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Racial Wealth Gap Visualization</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      background: #f5f5f4; /* soft stone gray */
-      color: #3a3a3a;      /* dark charcoal text */
+      background: linear-gradient(135deg, #000000, #5e5e5e);
+      color: #0b141b;
       font-family: Arial, sans-serif;
       margin: 0;
+      scroll-snap-type: y mandatory;
+      overflow-y: scroll;
+      scroll-behavior: smooth;
     }
     .section {
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      scroll-snap-align: start;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        scroll-snap-align: start;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        padding: 20px;
+        box-sizing: border-box;
+        text-align: center;
+        max-width: 900px;
+        margin: 0 auto;
     }
     .section.visible {
       opacity: 1;
       transform: translateY(0);
     }
+    h1, h2 {
+      margin-bottom: 0.5em;
+    }
+    p {
+      max-width: 600px;
+      line-height: 1.5;
+    }
+    .scroll-indicator {
+      margin-top: 40px;
+      animation: pulse 1.5s infinite;
+      color: #b2c3d0;
+      font-weight: bold;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+    /* Progress bar on top */
     .progress {
       position: fixed;
       top: 0;
       left: 0;
       height: 5px;
-      background: linear-gradient(90deg, #c94f4f, #555d50); /* burnt red to moss green */
+      background: linear-gradient(90deg, #014b15, #014d6e);
       width: 0%;
       z-index: 1000;
     }
-    .filters {
+    .timeline-container {
+      display: flex;
+      overflow-x: auto;
+      white-space: nowrap;
+      padding: 2rem;
+      gap: 1rem;
+      background: #47778d;
+    }
+    .timeline-card {
+      min-width: 300px;
+      flex: 0 0 auto;
+      background: #4a7a91;
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 4px 6px rgba(254, 254, 254, 0.1);
+      transition: transform 0.3s;
+    }
+    .timeline-card:hover {
+      transform: scale(1.05);
+    }
+    .timeline-card h3 {
+      margin-top: 0;
+    }
+    .progress-container {
       position: fixed;
-      top: 10px;
-      right: 10px;
-      background: #a6a392; /* muted earthy green */
-      border: 1px solid #8c8b7f;
-      border-radius: 8px;
-      padding: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: #4682b4;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: #0a0a0a;
+    }
+    /* Filters & City list styles */
+    .filters {
+      margin: 20px 0;
     }
     .filters button {
       margin: 5px;
-      background: #555d50; /* deep moss green */
-      color: #f5f5f4;      /* soft stone gray text */
+      background: #0a0a0a;
+      color: #d6d6d7;
       border: none;
       padding: 8px 12px;
       border-radius: 5px;
       cursor: pointer;
       font-weight: bold;
-      transition: background 0.3s ease;
+      transition: background 0.3s ease, color 0.3s ease;
     }
     .filters button.active {
-      background: #c94f4f; /* burnt red */
-      color: #fff;
+      background: #0b3d3d;
+      color: #d6d6d7;
+    }
+    .filters button:hover:not(.active) {
+      background: #2c2e31;
+      color: #d6d6d7;
+    }
+    .city-list {
+      width: 80%;
+      max-width: 800px;
+      max-height: 400px;
+      overflow-y: auto;
+      background: #1b1d1f;
+      border: 1px solid #0a0a0a;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+      color: #c0c5ce;
+      font-weight: 600;
+    }
+    .city-item {
+      border-bottom: 1px solid #a9b3b8;
+      padding: 10px 0;
+      text-align: left;
+    }
+    .city-item:last-child {
+      border-bottom: none;
     }
   </style>
 </head>
@@ -67,158 +147,196 @@
 
   <div class="progress" id="progressBar"></div>
 
-  <div class="section" style="background:#f5f5f4;">
-    <h1>Understanding the Racial Wealth Gap</h1>
-    <p>Scroll down to visualize disparities across US cities</p>
+  <!-- Intro Section -->
+  <div class="section" style="background: linear-gradient( #000000, #014b15); color: #99aabb;">
+    <h1>The Racial Wealth Gap</h1>
+    <h2>A Journey Through Generations</h2>
+    <p>Welcome to “The Racial Wealth Gap: A Journey Through Generations.”</p>
+    <p>In America, wealth isn’t just currency — it’s opportunity, security, influence. For Black Americans, that road is barricaded by systemic barriers spanning generations.</p>
+    <p>Scroll down to uncover the roots of these disparities, witness where they bite deepest, and glimpse the fight for change.</p>
+    <p>This isn’t cold data. This is resilience, loss, policy, and power — alive and evolving.</p>
+    <div class="scroll-indicator">Scroll to Begin</div>
   </div>
 
-  <div class="section" style="background:#e8e6dc;">
-    <h2>Median Net Worth: White vs Black Households</h2>
-    <div style="width:80%; max-width:800px;">
-      <canvas id="wealthChart"></canvas>
+  <!-- Timeline Section -->
+  <div class="section" style="background:linear-gradient( #014b15, #0b2545); color:#99aabb;">
+    <h2>Historical Context</h2>
+    <p>Understanding the historical foundation of the racial wealth divide.</p>
+    <div class="timeline">
+
+      <div class="timeline-card">
+        <h3>1860-1870</h3>
+        <p>Researchers digitized Census data from 1860 and 1870, capturing early post-Emancipation Black wealth records. The racial wealth gap stood at nearly <strong>60 to 1</strong>.</p>
+      </div>
+    
+      <div class="timeline-card">
+        <h3>1860s-1910s</h3>
+        <p>50 years of Southern state tax returns were digitized to reconstruct Black wealth data post-slavery, filling gaps in historical economic records.</p>
+      </div>
+    
+      <div class="timeline-card">
+        <h3>1920</h3>
+        <p>By this year, the white-to-Black wealth gap had narrowed to <strong>10 to 1</strong>. Progress was made, but slower than if Black Americans had equal savings and capital gains opportunities.</p>
+      </div>
+    
+      <div class="timeline-card">
+        <h3>1930s</h3>
+        <p>Historical estimations were verified using available data from the 1930s, ensuring accuracy in the reconstructed wealth data from prior decades.</p>
+      </div>
+    
+      <div class="timeline-card">
+        <h3>1950</h3>
+        <p>The racial wealth gap reduced to <strong>7 to 1</strong>. Yet, structural racism, segregation, and suppressed capital gains kept the gap wider than it would be under equality of savings.</p>
+      </div>
+    
+      <div class="timeline-card">
+        <h3>1960s-1980s</h3>
+        <p>The only period where the wealth gap closed faster than expected under equal savings rates. The civil rights movement, labor protections, and social safety nets bolstered Black wealth accumulation.</p>
+      </div>
+    
+      <div class="timeline-card">
+        <h3>1980s</h3>
+        <p>Surveys of wealth by racial identity began in the 1980s, with the <strong>Survey of Consumer Finances (SCF)</strong> filling in mid-20th century to modern data. Progress on closing the wealth gap largely stalled.</p>
+      </div>
+    
+      <div class="timeline-card">
+        <h3>2020</h3>
+        <p>Today, the Black-white per capita wealth ratio remains at approximately <strong>6 to 1</strong>. Had savings and capital gains been equal, the gap would have been <strong>3 to 1</strong>.</p>
+      </div>
     </div>
   </div>
 
-  <div class="section" style="background:#f5f5f4;">
-    <h2>Explore by Wealth Gap Size</h2>
-    <div class="filters" id="cityFilters">
-      <button data-filter="all" class="active">All</button>
-      <button data-filter="highGap">High Gap</button>
-      <button data-filter="mediumGap">Medium Gap</button>
-      <button data-filter="lowGap">Low Gap</button>
+  <!-- City Filter & List Section -->
+  <div class="section" style="background:linear-gradient(#0b2545, #1f1f1f); color:#99aabb;">
+    <h2>Explore Cities by Racial Wealth Gap</h2>
+    <div class="filters">
+      <button data-filter="all" class="active">Show All</button>
+      <button data-filter="best">Best</button>
+      <button data-filter="middle">Middle</button>
+      <button data-filter="worst">Worst</button>
+    </div>
+    <div class="city-list" id="cityList">
+      <!-- Cities will be rendered here -->
     </div>
   </div>
 
   <script>
-    const sections = document.querySelectorAll('.section');
-    const progressBar = document.getElementById('progressBar');
-
-    window.addEventListener('scroll', () => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.body.scrollHeight - window.innerHeight;
-      const scrollPercent = (scrollTop / docHeight) * 100;
-      progressBar.style.width = scrollPercent + '%';
-
-      sections.forEach(section => {
-        const rect = section.getBoundingClientRect();
-        if (rect.top < window.innerHeight * 0.75) {
-          section.classList.add('visible');
-        }
-      });
-    });
-
+    // Data: top 30 cities with gap categories (mocked)
     const cities = [
-      { name: "Boston, MA", white: 247500, black: 8000, gap: 31 },
-      { name: "Washington, DC", white: 284000, black: 3400, gap: 83 },
-      { name: "Atlanta, GA", white: 110000, black: 2500, gap: 44 },
-      { name: "Chicago, IL", white: 210000, black: 5000, gap: 42 },
-      { name: "Miami, FL", white: 100000, black: 3200, gap: 31 },
-      { name: "Philadelphia, PA", white: 150000, black: 4100, gap: 36 },
-      { name: "Detroit, MI", white: 95000, black: 2000, gap: 47 },
-      { name: "Los Angeles, CA", white: 355000, black: 3800, gap: 93 },
-      { name: "Houston, TX", white: 150000, black: 9000, gap: 17 },
-      { name: "New York, NY", white: 190000, black: 10000, gap: 19 },
-      { name: "Dallas, TX", white: 165000, black: 8500, gap: 19 },
-      { name: "Phoenix, AZ", white: 26000, black: 4200, gap: 6 },
-      { name: "Baltimore, MD", white: 35000, black: 6000, gap: 6 },
-      { name: "Minneapolis, MN", white: 35000, black: 6500, gap: 5 },
-      { name: "Seattle, WA", white: 35000, black: 7500, gap: 5 },
+      { name: 'Austin, TX', category: 'best', gap: '1.5' },
+      { name: 'Baltimore, MD', category: 'worst', gap: '45' },
+      { name: 'Chicago, IL', category: 'worst', gap: '41' },
+      { name: 'Dallas, TX', category: 'worst', gap: '25' },
+      { name: 'Detroit, MI', category: 'worst', gap: '32' },
+      { name: 'Denver, CO', category: 'middle', gap: '10' },
+      { name: 'Fresno, CA', category: 'middle', gap: '15' },
+      { name: 'Houston, TX', category: 'worst', gap: '20' },
+      { name: 'Indianapolis, IN', category: 'middle', gap: '12' },
+      { name: 'Jacksonville, FL', category: 'best', gap: '2' },
+      { name: 'Kansas City, MO', category: 'middle', gap: '11' },
+      { name: 'Los Angeles, CA', category: 'worst', gap: '38' },
+      { name: 'Memphis, TN', category: 'worst', gap: '44' },
+      { name: 'Miami, FL', category: 'middle', gap: '14' },
+      { name: 'Minneapolis, MN', category: 'middle', gap: '13' },
+      { name: 'New Orleans, LA', category: 'worst', gap: '43' },
+      { name: 'New York, NY', category: 'middle', gap: '9' },
+      { name: 'Oakland, CA', category: 'best', gap: '3' },
+      { name: 'Philadelphia, PA', category: 'worst', gap: '39' },
+      { name: 'Phoenix, AZ', category: 'middle', gap: '10' },
+      { name: 'Portland, OR', category: 'best', gap: '2' },
+      { name: 'Raleigh, NC', category: 'best', gap: '1.7' },
+      { name: 'San Antonio, TX', category: 'middle', gap: '12' },
+      { name: 'San Diego, CA', category: 'best', gap: '2' },
+      { name: 'San Francisco, CA', category: 'best', gap: '3' },
+      { name: 'Seattle, WA', category: 'best', gap: '2' },
+      { name: 'St. Louis, MO', category: 'worst', gap: '35' },
+      { name: 'Tampa, FL', category: 'middle', gap: '11' },
+      { name: 'Washington, DC', category: 'middle', gap: '10' },
+      { name: 'Wichita, KS', category: 'middle', gap: '12' },
     ];
 
-    cities.sort((a,b) => b.gap - a.gap);
+    const cityListEl = document.getElementById('cityList');
+    const filterButtons = document.querySelectorAll('.filters button');
 
-    const ctx = document.getElementById('wealthChart').getContext('2d');
+    function renderCities(filter = 'all') {
+      let filteredCities = cities;
+      if (filter !== 'all') {
+        filteredCities = cities.filter(city => city.category === filter);
+      }
 
-    function getChartData(filteredCities) {
-      return {
-        labels: filteredCities.map(c => c.name),
-        datasets: [
-          {
-            label: 'White Median Net Worth',
-            data: filteredCities.map(c => c.white),
-            backgroundColor: '#555d50',  // deep moss green
-            borderRadius: 6,
-          },
-          {
-            label: 'Black Median Net Worth',
-            data: filteredCities.map(c => c.black),
-            backgroundColor: '#c94f4f',  // burnt red
-            borderRadius: 6,
-          }
-        ]
-      };
+      // Clear current list
+      cityListEl.innerHTML = '';
+
+      if (filteredCities.length === 0) {
+        cityListEl.innerHTML = '<p>No cities found for this filter.</p>';
+        return;
+      }
+
+      // Create and append city items
+      filteredCities.forEach(city => {
+        const cityDiv = document.createElement('div');
+        cityDiv.classList.add('city-item');
+        cityDiv.textContent = `${city.name} — Wealth Gap: ${city.gap} to 1`;
+        cityListEl.appendChild(cityDiv);
+      });
     }
 
-    const chartConfig = {
-      type: 'bar',
-      data: getChartData(cities),
-      options: {
-        responsive: true,
-        interaction: {
-          mode: 'index',
-          intersect: false,
-        },
-        stacked: false,
-        plugins: {
-          legend: {
-            labels: {
-              color: '#555d50',
-              font: { weight: 'bold', size: 14 }
-            }
-          },
-          tooltip: {
-            callbacks: {
-              label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString(),
-            }
-          }
-        },
-        scales: {
-          x: {
-            ticks: { color: '#555d50', font: { weight: 'bold' } },
-            grid: { display: false }
-          },
-          y: {
-            beginAtZero: true,
-            ticks: {
-              color: '#555d50',
-              font: { weight: 'bold' },
-              callback: val => '$' + val / 1000 + 'k'
-            },
-            grid: {
-              color: '#ddd'
-            }
-          }
-        }
-      },
-    };
+    // Initialize with all cities shown
+    renderCities();
 
-    let wealthChart = new Chart(ctx, chartConfig);
+    // Filter button click events
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        // Remove active class from all buttons
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        // Add active to clicked
+        button.classList.add('active');
 
-    const buttons = document.querySelectorAll('#cityFilters button');
-    buttons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        buttons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        let filtered;
-        switch(btn.dataset.filter){
-          case 'highGap':
-            filtered = cities.filter(c => c.gap >= 10);
-            break;
-          case 'mediumGap':
-            filtered = cities.filter(c => c.gap >= 5 && c.gap < 10);
-            break;
-          case 'lowGap':
-            filtered = cities.filter(c => c.gap < 5);
-            break;
-          default:
-            filtered = cities;
-        }
-
-        wealthChart.data = getChartData(filtered);
-        wealthChart.update();
+        const filter = button.getAttribute('data-filter');
+        renderCities(filter);
       });
     });
+
+    // Scroll reveal for sections and timeline cards
+    const sections = document.querySelectorAll('.section');
+    const timelineCards = document.querySelectorAll('.timeline-card');
+
+    function revealOnScroll() {
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+
+      // Reveal sections
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (scrollY + windowHeight > sectionTop + 100) {
+          section.classList.add('visible');
+        } else {
+          section.classList.remove('visible');
+        }
+      });
+
+      // Reveal timeline cards
+      timelineCards.forEach(card => {
+        const cardTop = card.offsetTop;
+        if (scrollY + windowHeight > cardTop + 100) {
+          card.classList.add('visible');
+        } else {
+          card.classList.remove('visible');
+        }
+      });
+
+      // Update progress bar
+      const scrollHeight = document.body.scrollHeight - windowHeight;
+      const scrolledPercent = (scrollY / scrollHeight) * 100;
+      document.getElementById('progressBar').style.width = scrolledPercent + '%';
+    }
+
+    window.addEventListener('scroll', revealOnScroll);
+
+    // Initial reveal on load
+    revealOnScroll();
   </script>
+
 </body>
 </html>
+
